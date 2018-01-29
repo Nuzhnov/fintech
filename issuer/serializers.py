@@ -1,12 +1,7 @@
 from rest_framework import serializers, fields
-from issuer.models import Transaction, Account, AUTHORISATION, PRESENTMENT, TRANSACTION_CHOICES
+from issuer.models import Transaction, Account, AUTHORISATION, PRESENTMENT
 from decimal import Decimal
 
-class AccountSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Account
-        fields = "__all__"
-        read_only_field = "__all__"
 
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
@@ -34,6 +29,7 @@ class TransactionSerializer(serializers.ModelSerializer):
 
 
 class BalanceSerializer(serializers.Serializer):
+    """Simple serializer for balance requests"""
     ledger_balance = fields.DecimalField(11, 2)
     balance = fields.DecimalField(11, 2)
 

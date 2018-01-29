@@ -12,12 +12,17 @@ from rest_framework import generics
 import datetime
 import logging
 from issuer.models import Account, Transaction
-from issuer.serializers import AccountSerializer, TransactionSerializer, BalanceSerializer
+from issuer.serializers import TransactionSerializer, BalanceSerializer
 
 logger = logging.getLogger('fintech.issuer.views')
 
 
 class TransactionHandler(APIView):
+    """
+    post:
+    Handle & save transaction in json format
+    Mandatory fields: transaction_id, type, card_id, billing_amount, billing_currency, transaction_amount, transaction_currency
+    """
     def post(self, request, format=None):
         logger.info('Recived transaction: {}'.format(str(request.data)))
         serializer = TransactionSerializer(data=request.data)
@@ -27,12 +32,22 @@ class TransactionHandler(APIView):
             return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_403_FORBIDDEN)
 
-class AccountTransactions(APIView):
+
+class AccountMixin:
+    """Mixin for getting account object"""
+    
     def get_object(self, account_name):
         try:
             return Account.objects.get(card_id=account_name)
         except Account.DoesNotExist:
             raise Http404
+
+
+class AccountTransactions(AccountMixin, APIView):
+    """
+    get:
+    Select presentment transaction history for selected account in selected timeframe
+    """
 
     def get(self, request, name, format=None):
         start_t = request.query_params.get("start")
@@ -47,12 +62,11 @@ class AccountTransactions(APIView):
         serializer = TransactionSerializer(transactions, many=True)
         return Response(serializer.data)
 
-class AccountBalance(APIView):
-    def get_object(self, account_name):
-        try:
-            return Account.objects.get(card_id=account_name)
-        except Account.DoesNotExist:
-            raise Http404
+class AccountBalance(AccountMixin, APIView):
+    """
+    get:
+    Select account balance and avaliable ('ledger_balance') history for particular time
+    """
 
     def get(self, request, name, format=None):
         t_point = request.query_params.get("time")
